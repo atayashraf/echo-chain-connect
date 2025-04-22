@@ -1,1 +1,51 @@
+
 project_id = "qxspnyupxtvolzwjlgqt"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+
+[analytics]
+enabled = false
+
+[vector]
+enabled = false
+
+[functions.search-posts]
+verify_jwt = false
+
+[functions.get-post-comments]
+verify_jwt = false
+
+[functions.add-post-comment]
+verify_jwt = false
+
+[functions.get-posts-by-tag]
+verify_jwt = false
+
+[functions.get-user-notifications]
+verify_jwt = false
+
+[functions.mark-notification-as-read]
+verify_jwt = false
