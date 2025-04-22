@@ -23,15 +23,16 @@ export function useRealtimeSubscription({
   useEffect(() => {
     // Create a channel to listen for changes
     const channel = supabase
-      .channel(`${schema}:${table}`)
+      .channel(`${schema}:${table}:changes`)
       .on(
         'postgres_changes', 
-        { 
-          event, 
-          schema, 
-          table 
+        {
+          event,
+          schema,
+          table
         },
-        () => {
+        (payload) => {
+          console.log('Realtime change detected:', payload);
           callback();
         }
       )
