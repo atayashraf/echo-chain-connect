@@ -3,8 +3,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { User, Heart, MessageSquare, Award, UserPlus, Share } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications, type Notification } from "@/hooks/useNotifications";
 import { useEffect } from "react";
+import { formatDistance } from "date-fns";
 
 const NotificationIcon = ({ type }: { type: string }) => {
   switch (type) {
@@ -23,7 +24,7 @@ const NotificationIcon = ({ type }: { type: string }) => {
   }
 };
 
-export function NotificationCard({ notification }: { notification: any }) {
+export function NotificationCard({ notification }: { notification: Notification }) {
   const { markAsRead } = useNotifications();
 
   useEffect(() => {
@@ -44,10 +45,10 @@ export function NotificationCard({ notification }: { notification: any }) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <Link 
-              to={`/profile/${notification.actor.username}`} 
+              to={`/profile/${notification.actor?.username}`} 
               className="font-medium hover:text-primary"
             >
-              {notification.actor.display_name || notification.actor.username}
+              {notification.actor?.display_name || notification.actor?.username}
             </Link>
             {notification.content}
             {notification.post_id && (
@@ -58,7 +59,7 @@ export function NotificationCard({ notification }: { notification: any }) {
           </div>
           
           <Avatar className="w-10 h-10 flex-shrink-0">
-            <AvatarImage src={notification.actor.avatar_url} />
+            <AvatarImage src={notification.actor?.avatar_url} />
             <AvatarFallback className="bg-primary-light text-primary">
               <User className="w-5 h-5" />
             </AvatarFallback>
@@ -66,7 +67,7 @@ export function NotificationCard({ notification }: { notification: any }) {
         </div>
         
         <p className="text-xs text-muted-foreground mt-1">
-          {new Date(notification.created_at).toRelativeTime()}
+          {formatDistance(new Date(notification.created_at), new Date(), { addSuffix: true })}
         </p>
       </div>
     </Card>

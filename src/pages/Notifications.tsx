@@ -19,14 +19,18 @@ const Notifications = () => {
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-        ) : (
+        ) : notifications && notifications.length > 0 ? (
           <div className="space-y-4">
-            {notifications?.map((notification) => (
+            {notifications.map((notification) => (
               <NotificationCard
                 key={notification.id}
                 notification={notification}
               />
             ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No notifications yet</p>
           </div>
         )}
       </div>
