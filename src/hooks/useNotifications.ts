@@ -30,7 +30,6 @@ export function useNotifications() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      // Use a raw SQL query instead of .from() to avoid TypeScript issues
       const { data, error } = await supabase.rpc('get_user_notifications');
 
       if (error) {
@@ -44,7 +43,6 @@ export function useNotifications() {
 
   const { mutate: markAsRead } = useMutation({
     mutationFn: async (notificationId: string) => {
-      // Use a raw SQL query instead of .from() to avoid TypeScript issues
       const { error } = await supabase.rpc('mark_notification_as_read', {
         notification_id: notificationId
       });
