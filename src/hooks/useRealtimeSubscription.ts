@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,11 +25,7 @@ export function useRealtimeSubscription({
       .channel(`${schema}:${table}:changes`)
       .on(
         'postgres_changes', 
-        {
-          event,
-          schema,
-          table
-        },
+        { event, schema, table },
         (payload) => {
           console.log('Realtime change detected:', payload);
           callback();
