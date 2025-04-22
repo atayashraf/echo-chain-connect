@@ -1,8 +1,19 @@
 
-import { CreatePost } from "@/components/CreatePost";
+import { ProfileCard } from "@/components/ProfileCard";
 import { PostCard } from "@/components/PostCard";
 import { TrendingTopics } from "@/components/TrendingTopics";
 import { Header } from "@/components/Header";
+
+// Mock user profile data
+const profile = {
+  name: "Crypto Enthusiast",
+  address: "0xf3D58e5B2984a5E8802B869e5bC425Af7dd5a2B",
+  bio: "Building the decentralized future. Web3 developer and crypto enthusiast.",
+  followers: 245,
+  following: 128,
+  posts: 42,
+  reputation: 87
+};
 
 // Mock post data
 const posts = [
@@ -22,9 +33,9 @@ const posts = [
   {
     id: "2",
     author: {
-      name: "Blockchain Developer",
-      address: "0x8a7F7902356bf32589E585c0F31BcE4A0D5d599C",
-      reputation: 124
+      name: "Crypto Enthusiast",
+      address: "0xf3D58e5B2984a5E8802B869e5bC425Af7dd5a2B",
+      reputation: 87
     },
     content: "Thoughts on the latest EIP? I think it's a game changer for scaling solutions.",
     timestamp: "1d ago",
@@ -34,36 +45,24 @@ const posts = [
   {
     id: "3",
     author: {
-      name: "NFT Creator",
-      address: "0x3e4D98C1F7d2B5cE7F8E29E2C7D9D8e2d3F7d4A2",
-      reputation: 56
+      name: "Crypto Enthusiast",
+      address: "0xf3D58e5B2984a5E8802B869e5bC425Af7dd5a2B",
+      reputation: 87
     },
-    content: "Just minted my latest collection! Check it out on OpenSea. What do you think of the art direction?",
+    content: "The future is decentralized. Don't let anyone tell you otherwise.",
     timestamp: "3d ago",
     likes: 56,
     comments: 12
-  },
-  {
-    id: "4",
-    author: {
-      name: "DeFi Explorer",
-      address: "0x9d76E12A82F864aB782AE8918eB7C1D1A247d9E1",
-      reputation: 32
-    },
-    content: "Yield farming strategies in this market are getting interesting. Anyone exploring the new protocols launched last week?",
-    timestamp: "5d ago",
-    likes: 18,
-    comments: 7
   }
 ];
 
-const Index = () => {
+const Profile = () => {
   return (
     <>
       <Header />
       <div className="container py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <CreatePost />
+          <ProfileCard profile={profile} isCurrentUser={true} />
           <div className="space-y-4">
             {posts.map((post) => (
               <PostCard key={post.id} {...post} />
@@ -78,4 +77,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Profile;
