@@ -1,9 +1,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { User } from '@supabase/supabase-js';
 import { useToast } from '@/components/ui/use-toast';
-import { format, formatDistance } from 'date-fns';
+import { formatDistance } from 'date-fns';
 
 export interface Notification {
   id: string;
@@ -31,35 +30,29 @@ export function useNotifications() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      // Using raw query to work around the fact that the notifications table
-      // might not be in the types yet
-      const { data, error } = await supabase
-        .from('notifications')
-        .select(`
-          *,
-          actor:profiles!actor_id(
-            username,
-            display_name,
-            avatar_url
-          )
-        `)
-        .order('created_at', { ascending: false });
+      // Use a raw SQL query instead of .from() to avoid TypeScript issues
+      const { data, error } = await supabase.rpc('get_user_notifications');
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching notifications:", error);
+        throw error;
+      }
+      
       return data as Notification[];
     },
   });
 
   const { mutate: markAsRead } = useMutation({
     mutationFn: async (notificationId: string) => {
-      // Using raw query to work around the fact that the notifications table
-      // might not be in the types yet
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
+      // Use a raw SQL query instead of .from() to avoid TypeScript issues
+      const { error } = await supabase.rpc('mark_notification_as_read', {
+        notification_id: notificationId
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error marking notification as read:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
