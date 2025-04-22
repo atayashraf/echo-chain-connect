@@ -38,7 +38,7 @@ const TagPage = () => {
       try {
         const { data, error } = await supabase.rpc('get_posts_by_tag', {
           tag_name: tagName
-        }) as { data: Post[], error: any };
+        }) as unknown as { data: Post[], error: any };
 
         if (error) {
           console.error("Error fetching posts by tag:", error);

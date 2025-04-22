@@ -30,7 +30,7 @@ export function useNotifications() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.rpc('get_user_notifications') as {
+      const { data, error } = await supabase.rpc('get_user_notifications', {}) as unknown as {
         data: Notification[];
         error: any;
       };
@@ -48,7 +48,7 @@ export function useNotifications() {
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase.rpc('mark_notification_as_read', {
         notification_id: notificationId
-      } as any);
+      }) as unknown as { error: any };
 
       if (error) {
         console.error("Error marking notification as read:", error);

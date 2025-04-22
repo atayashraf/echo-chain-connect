@@ -68,7 +68,7 @@ export function CreatePost() {
           // Check if hashtag exists
           const { data: existingTag } = await supabase
             .from('hashtags')
-            .select('id')
+            .select('id, posts_count')
             .eq('name', tag)
             .single();
           
@@ -79,7 +79,7 @@ export function CreatePost() {
             // Increment posts_count
             await supabase
               .from('hashtags')
-              .update({ posts_count: existingTag.posts_count + 1 })
+              .update({ posts_count: (existingTag.posts_count || 0) + 1 })
               .eq('id', hashtagId);
           } else {
             // Create new hashtag

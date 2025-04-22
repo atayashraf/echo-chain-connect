@@ -100,32 +100,39 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
     
     setIsLoadingComments(true);
     try {
+      // Use SQL query instead of select directly from comments table
       const { data, error } = await supabase
-        .from('comments')
+        .from('posts')
         .select(`
           id,
-          content,
-          created_at,
-          user_id,
-          profiles:user_id (username, display_name, avatar_url)
+          comments:comments(
+            id,
+            content,
+            created_at,
+            user_id,
+            user:profiles(username, display_name, avatar_url)
+          )
         `)
-        .eq('post_id', id)
-        .order('created_at', { ascending: false });
+        .eq('id', id)
+        .single();
 
       if (error) throw error;
 
-      const formattedComments = data.map(comment => ({
-        id: comment.id,
-        content: comment.content,
-        created_at: comment.created_at,
-        user: {
-          name: comment.profiles?.display_name || comment.profiles?.username || 'Anonymous',
-          username: comment.profiles?.username || 'user',
-          avatar_url: comment.profiles?.avatar_url
-        }
-      }));
+      // Format the comments
+      if (data && data.comments && Array.isArray(data.comments)) {
+        const formattedComments = data.comments.map((comment: any) => ({
+          id: comment.id,
+          content: comment.content,
+          created_at: comment.created_at,
+          user: {
+            name: comment.user?.display_name || comment.user?.username || 'Anonymous',
+            username: comment.user?.username || 'user',
+            avatar_url: comment.user?.avatar_url
+          }
+        }));
 
-      setCommentsList(formattedComments);
+        setCommentsList(formattedComments);
+      }
       setCommentsLoaded(true);
     } catch (error) {
       console.error("Error loading comments:", error);
@@ -153,6 +160,7 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
         return;
       }
 
+      // Submit comment directly to the comments table
       const { data, error } = await supabase
         .from('comments')
         .insert({
