@@ -35,9 +35,20 @@ interface PostCardProps {
   comments: number;
   isNFT?: boolean;
   liked?: boolean;
+  onPostUpdated?: () => void;
 }
 
-export function PostCard({ id, author, content, timestamp, likes: initialLikes, comments: initialComments, isNFT = false, liked: initialLiked = false }: PostCardProps) {
+export function PostCard({ 
+  id, 
+  author, 
+  content, 
+  timestamp, 
+  likes: initialLikes, 
+  comments: initialComments, 
+  isNFT = false, 
+  liked: initialLiked = false,
+  onPostUpdated
+}: PostCardProps) {
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likesCount, setLikesCount] = useState(initialLikes);
@@ -70,6 +81,10 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
         if (error) throw error;
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
+        
+        if (onPostUpdated) {
+          onPostUpdated();
+        }
       } else {
         const { error } = await supabase
           .from('likes')
@@ -81,6 +96,10 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
         if (error) throw error;
         setIsLiked(true);
         setLikesCount(prev => prev + 1);
+        
+        if (onPostUpdated) {
+          onPostUpdated();
+        }
       }
     } catch (error) {
       console.error("Error toggling like:", error);
@@ -155,6 +174,10 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
           title: "Comment added",
           description: "Your comment has been posted",
         });
+        
+        if (onPostUpdated) {
+          onPostUpdated();
+        }
       }
     } catch (error) {
       console.error("Error adding comment:", error);

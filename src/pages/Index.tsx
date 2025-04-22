@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CreatePost } from "@/components/CreatePost";
 import { PostCard } from "@/components/PostCard";
 import { TrendingTopics } from "@/components/TrendingTopics";
@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Post {
   id: string;
@@ -29,73 +30,96 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        const userId = session.session?.user.id;
-        
-        const { data, error } = await supabase
-          .from('posts')
-          .select(`
-            id, 
-            content, 
-            created_at, 
-            likes_count, 
-            post_type,
-            user_id,
-            profiles:user_id (username, display_name, avatar_url, reputation_score),
-            comments:comments(count),
-            likes:likes!inner(user_id)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(10);
-        
-        if (error) {
-          throw error;
-        }
-        
-        // Format the posts data
-        const formattedPosts = data.map(post => ({
-          id: post.id,
-          content: post.content,
-          created_at: post.created_at,
-          likes_count: post.likes_count || 0,
-          post_type: post.post_type,
-          user_id: post.user_id,
-          user: {
-            username: post.profiles?.username || "anonymous",
-            display_name: post.profiles?.display_name || post.profiles?.username || "Anonymous User",
-            avatar_url: post.profiles?.avatar_url || "",
-            reputation_score: post.profiles?.reputation_score || 0
-          },
-          comments_count: post.comments?.length || 0,
-          user_has_liked: userId ? post.likes?.some((like: any) => like.user_id === userId) : false
-        }));
-        
-        setPosts(formattedPosts);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load posts. Please refresh the page.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+  const fetchPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user.id;
+      
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          id, 
+          content, 
+          created_at, 
+          likes_count, 
+          post_type,
+          user_id,
+          profiles:user_id (username, display_name, avatar_url, reputation_score),
+          comments:comments(count),
+          likes(user_id)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) {
+        throw error;
       }
-    };
-
-    fetchPosts();
+      
+      // Format the posts data
+      const formattedPosts = data.map(post => ({
+        id: post.id,
+        content: post.content,
+        created_at: post.created_at,
+        likes_count: post.likes_count || 0,
+        post_type: post.post_type,
+        user_id: post.user_id,
+        user: {
+          username: post.profiles?.username || "anonymous",
+          display_name: post.profiles?.display_name || post.profiles?.username || "Anonymous User",
+          avatar_url: post.profiles?.avatar_url || "",
+          reputation_score: post.profiles?.reputation_score || 0
+        },
+        comments_count: post.comments?.length || 0,
+        user_has_liked: userId ? post.likes?.some((like: any) => like.user_id === userId) : false
+      }));
+      
+      setPosts(formattedPosts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load posts. Please refresh the page.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
+
+  // Set up a subscription for real-time updates
+  useEffect(() => {
+    fetchPosts();
+    
+    // Set up subscription for new posts
+    const postsChannel = supabase
+      .channel('public:posts')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'posts' 
+        },
+        () => {
+          fetchPosts();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(postsChannel);
+    };
+  }, [fetchPosts]);
 
   return (
     <>
       <Header />
       <div className="container py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          <CreatePost />
+          <CreatePost onPostCreated={fetchPosts} />
           <div className="space-y-4">
             {loading ? (
               [...Array(4)].map((_, i) => (
@@ -118,6 +142,7 @@ const Index = () => {
                   comments={post.comments_count}
                   isNFT={post.post_type === "nft"}
                   liked={post.user_has_liked}
+                  onPostUpdated={fetchPosts}
                 />
               ))
             ) : (

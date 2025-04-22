@@ -11,7 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
-export function CreatePost() {
+interface CreatePostProps {
+  onPostCreated?: () => void;
+}
+
+export function CreatePost({ onPostCreated }: CreatePostProps) {
   const [content, setContent] = useState("");
   const [isNFT, setIsNFT] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,8 +120,10 @@ export function CreatePost() {
       setContent("");
       setIsNFT(false);
       
-      // Refresh the page to show the new post
-      navigate(0);
+      // Call the callback if provided
+      if (onPostCreated) {
+        onPostCreated();
+      }
       
     } catch (error) {
       console.error("Error creating post:", error);
