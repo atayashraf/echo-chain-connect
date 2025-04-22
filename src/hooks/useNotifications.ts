@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -30,25 +29,22 @@ export function useNotifications() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.rpc('get_user_notifications', {}) as unknown as {
-        data: Notification[];
-        error: any;
-      };
+      const { data, error } = await supabase.functions.invoke('get-user-notifications') as { data: Notification[]; error: any };
 
       if (error) {
         console.error("Error fetching notifications:", error);
         throw error;
       }
       
-      return data;
+      return data || [];
     },
   });
 
-  const { mutate: markAsRead } = useMutation<void, Error, string>({
+  const { mutate: markAsRead } = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase.rpc('mark_notification_as_read', {
-        notification_id: notificationId
-      }) as unknown as { error: any };
+      const { error } = await supabase.functions.invoke('mark-notification-as-read', {
+        body: { notificationId }
+      });
 
       if (error) {
         console.error("Error marking notification as read:", error);

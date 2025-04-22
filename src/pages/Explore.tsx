@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,15 +109,13 @@ const Explore = () => {
     setHasSearched(true);
     
     try {
-      const { data, error } = await supabase.rpc('search_posts', {
-        search_query: searchQuery.trim()
-      }) as unknown as { data: Post[], error: any };
+      const { data: searchResults, error } = await supabase.functions.invoke('search-posts', {
+        body: { query: searchQuery.trim() }
+      });
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      setSearchResults(data || []);
+      setSearchResults(searchResults || []);
     } catch (error) {
       console.error("Error searching posts:", error);
       toast({

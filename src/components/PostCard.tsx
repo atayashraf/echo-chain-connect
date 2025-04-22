@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,6 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
       }
 
       if (isLiked) {
-        // Unlike the post
         const { error } = await supabase
           .from('likes')
           .delete()
@@ -73,7 +71,6 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
       } else {
-        // Like the post
         const { error } = await supabase
           .from('likes')
           .insert({
@@ -100,38 +97,14 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
     
     setIsLoadingComments(true);
     try {
-      // Use SQL query instead of select directly from comments table
-      const { data, error } = await supabase
-        .from('posts')
-        .select(`
-          id,
-          comments:comments(
-            id,
-            content,
-            created_at,
-            user_id,
-            user:profiles(username, display_name, avatar_url)
-          )
-        `)
-        .eq('id', id)
-        .single();
+      const { data: commentsData, error } = await supabase.functions.invoke('get-post-comments', {
+        body: { postId: id }
+      });
 
       if (error) throw error;
 
-      // Format the comments
-      if (data && data.comments && Array.isArray(data.comments)) {
-        const formattedComments = data.comments.map((comment: any) => ({
-          id: comment.id,
-          content: comment.content,
-          created_at: comment.created_at,
-          user: {
-            name: comment.user?.display_name || comment.user?.username || 'Anonymous',
-            username: comment.user?.username || 'user',
-            avatar_url: comment.user?.avatar_url
-          }
-        }));
-
-        setCommentsList(formattedComments);
+      if (commentsData) {
+        setCommentsList(commentsData);
       }
       setCommentsLoaded(true);
     } catch (error) {
@@ -160,51 +133,29 @@ export function PostCard({ id, author, content, timestamp, likes: initialLikes, 
         return;
       }
 
-      // Submit comment directly to the comments table
-      const { data, error } = await supabase
-        .from('comments')
-        .insert({
-          post_id: id,
-          user_id: session.session.user.id,
+      const { data: newComment, error } = await supabase.functions.invoke('add-post-comment', {
+        body: {
+          postId: id,
           content: commentText.trim()
-        })
-        .select();
+        }
+      });
 
       if (error) throw error;
 
-      // Get the user profile for the new comment
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('username, display_name, avatar_url')
-        .eq('id', session.session.user.id)
-        .single();
-
-      if (userError) throw userError;
-
-      const newComment = {
-        id: data[0].id,
-        content: data[0].content,
-        created_at: data[0].created_at,
-        user: {
-          name: userData?.display_name || userData?.username || 'Anonymous',
-          username: userData?.username || 'user',
-          avatar_url: userData?.avatar_url
+      if (newComment) {
+        setCommentsList(prev => [newComment, ...prev]);
+        setCommentText("");
+        setCommentsCount(prev => prev + 1);
+        
+        if (!commentsLoaded) {
+          setCommentsLoaded(true);
         }
-      };
 
-      // Add the new comment to the list
-      setCommentsList(prev => [newComment, ...prev]);
-      setCommentText("");
-      setCommentsCount(prev => prev + 1);
-      
-      if (!commentsLoaded) {
-        setCommentsLoaded(true);
+        toast({
+          title: "Comment added",
+          description: "Your comment has been posted",
+        });
       }
-
-      toast({
-        title: "Comment added",
-        description: "Your comment has been posted",
-      });
     } catch (error) {
       console.error("Error adding comment:", error);
       toast({

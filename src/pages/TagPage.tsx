@@ -36,9 +36,9 @@ const TagPage = () => {
       setIsLoading(true);
 
       try {
-        const { data, error } = await supabase.rpc('get_posts_by_tag', {
-          tag_name: tagName
-        }) as unknown as { data: Post[], error: any };
+        const { data: posts, error } = await supabase.functions.invoke('get-posts-by-tag', {
+          body: { tagName }
+        });
 
         if (error) {
           console.error("Error fetching posts by tag:", error);
@@ -48,7 +48,7 @@ const TagPage = () => {
             variant: "destructive",
           });
         } else {
-          setPosts(data || []);
+          setPosts(posts || []);
         }
       } catch (err) {
         console.error("Error fetching posts by tag:", err);
