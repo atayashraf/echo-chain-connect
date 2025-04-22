@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Explore from "./pages/Explore";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import TagPage from "./pages/TagPage";
 import { WalletProvider } from "./contexts/WalletContext";
 
 // Create a client
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/profile/:address" element={<Profile />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/tags/:tagName" element={<TagPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
