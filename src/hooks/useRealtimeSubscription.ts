@@ -25,11 +25,11 @@ export function useRealtimeSubscription({
     const channel = supabase
       .channel(`${schema}:${table}`)
       .on(
-        "postgres_changes", 
+        'postgres_changes', 
         { 
-          event: event, 
-          schema: schema, 
-          table: table 
+          event, 
+          schema, 
+          table 
         },
         () => {
           callback();
