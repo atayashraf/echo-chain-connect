@@ -44,7 +44,7 @@ export function useNotifications() {
     },
   });
 
-  const { mutate: markAsRead } = useMutation({
+  const { mutate: markAsRead } = useMutation<void, Error, string>({
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase.rpc('mark_notification_as_read', {
         notification_id: notificationId
