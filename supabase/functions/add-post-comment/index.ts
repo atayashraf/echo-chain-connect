@@ -40,33 +40,36 @@ serve(async (req) => {
     }
 
     // Insert the new comment
-    const { data: newComment, error } = await supabaseClient
+    const { data: commentData, error: commentError } = await supabaseClient
       .from("comments")
       .insert({
         post_id: postId,
         user_id: user.id,
         content: content
       })
-      .select(`
-        id, 
-        content, 
-        created_at,
-        user_id,
-        profiles:user_id (username, display_name, avatar_url)
-      `)
+      .select()
       .single();
 
-    if (error) throw error;
+    if (commentError) throw commentError;
 
-    // Format the new comment
+    // Now fetch user profile data separately
+    const { data: profileData, error: profileError } = await supabaseClient
+      .from("profiles")
+      .select("username, display_name, avatar_url")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    // Format the new comment with user data
     const formattedComment = {
-      id: newComment.id,
-      content: newComment.content,
-      created_at: newComment.created_at,
+      id: commentData.id,
+      content: commentData.content,
+      created_at: commentData.created_at,
       user: {
-        name: newComment.profiles?.display_name || newComment.profiles?.username || "Anonymous User",
-        username: newComment.profiles?.username || "anonymous",
-        avatar_url: newComment.profiles?.avatar_url || ""
+        name: profileData?.display_name || profileData?.username || "Anonymous User",
+        username: profileData?.username || "anonymous",
+        avatar_url: profileData?.avatar_url || ""
       }
     };
 

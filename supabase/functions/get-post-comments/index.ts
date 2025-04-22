@@ -32,7 +32,7 @@ serve(async (req) => {
       }
     );
 
-    // Get comments for the post
+    // Get comments for the post with author information
     const { data: comments, error } = await supabaseClient
       .from("comments")
       .select(`
@@ -40,7 +40,7 @@ serve(async (req) => {
         content, 
         created_at,
         user_id,
-        profiles:user_id (username, display_name, avatar_url)
+        profiles(username, display_name, avatar_url)
       `)
       .eq("post_id", postId)
       .order("created_at", { ascending: false });

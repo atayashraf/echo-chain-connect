@@ -47,30 +47,55 @@ serve(async (req) => {
         post_id, 
         content, 
         read, 
-        created_at,
-        actors:actor_id (username, display_name, avatar_url)
+        created_at
       `)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
+    // Get actor profile information
+    const actorIds = notifications.map(notification => notification.actor_id).filter(Boolean);
+    let actorProfiles = {};
+    
+    if (actorIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabaseClient
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .in("id", actorIds);
+      
+      if (profilesError) throw profilesError;
+      
+      actorProfiles = profiles.reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {});
+    }
+
     // Format notification data
-    const formattedNotifications = notifications.map(notification => ({
-      id: notification.id,
-      type: notification.type,
-      user_id: notification.user_id,
-      actor_id: notification.actor_id,
-      post_id: notification.post_id,
-      content: notification.content,
-      read: notification.read,
-      created_at: notification.created_at,
-      actor: {
-        username: notification.actors?.username || "anonymous",
-        display_name: notification.actors?.display_name || notification.actors?.username || "Anonymous User",
-        avatar_url: notification.actors?.avatar_url || ""
-      }
-    }));
+    const formattedNotifications = notifications.map(notification => {
+      const actor = actorProfiles[notification.actor_id] || null;
+      
+      return {
+        id: notification.id,
+        type: notification.type,
+        user_id: notification.user_id,
+        actor_id: notification.actor_id,
+        post_id: notification.post_id,
+        content: notification.content,
+        read: notification.read,
+        created_at: notification.created_at,
+        actor: actor ? {
+          username: actor.username || "anonymous",
+          display_name: actor.display_name || actor.username || "Anonymous User",
+          avatar_url: actor.avatar_url || ""
+        } : {
+          username: "anonymous",
+          display_name: "Anonymous User",
+          avatar_url: ""
+        }
+      };
+    });
 
     // Return the notifications
     return new Response(JSON.stringify(formattedNotifications), {
